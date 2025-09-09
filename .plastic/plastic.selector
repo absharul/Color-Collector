@@ -1,0 +1,3 @@
+repository "D-Square/D-Square@13469286556337@cloud"
+  path "/"
+    smartbranch "/main/D-Square-New-Level-Addititon"
