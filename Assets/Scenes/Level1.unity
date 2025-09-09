@@ -234,7 +234,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   statusText: {fileID: 1592338832}
   levelComppleteImage: {fileID: 2056222146}
-  quitPanelAnimation: {fileID: 1805580661}
   nextLevelButton: {fileID: 1813588792}
   restartPlayButton: {fileID: 1275835575}
   quitGameButton: {fileID: 1212976215}
@@ -1904,17 +1903,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6874490027098681170, guid: 46af6c67efd477140b24f3666e5849dd, type: 3}
   m_PrefabInstance: {fileID: 4059282439311719719}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1805580661 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7155947231950706642, guid: 46af6c67efd477140b24f3666e5849dd, type: 3}
-  m_PrefabInstance: {fileID: 4059282439311719719}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805580659}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f8b19f3e6d20aa44da8473eb581703b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1813588792 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4773650993780308004, guid: 46af6c67efd477140b24f3666e5849dd, type: 3}

@@ -23,10 +23,14 @@ public class LevelManager : MonoBehaviour
     }
 
     [Header("Level Settings")]
-    public int totalLevels = 10; // Set this to your total number of levels
+    public int totalLevels = 10; // This will be auto-adjusted based on actual scenes
+    
+    [Header("Fallback Settings")]
+    public string menuSceneName = "GameMenu"; // Fallback scene name
     
     private const string LEVEL_PROGRESS_KEY = "LevelProgress";
     private const string HIGHEST_UNLOCKED_KEY = "HighestUnlockedLevel";
+    private int actualTotalLevels; // Actual number of level scenes found
 
     void Awake()
     {
@@ -38,7 +42,11 @@ public class LevelManager : MonoBehaviour
         else if (instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        
+        // Validate and adjust total levels
+        ValidateLevelScenes();
     }
 
     void Start()
@@ -51,6 +59,36 @@ public class LevelManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Validate which level scenes actually exist and update totalLevels accordingly
+    /// </summary>
+    private void ValidateLevelScenes()
+    {
+        actualTotalLevels = 0;
+        
+        for (int i = 1; i <= totalLevels; i++)
+        {
+            string sceneName = "Level" + i;
+            if (Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                actualTotalLevels = i;
+            }
+            else
+            {
+                Debug.LogWarning($"Scene '{sceneName}' not found in Build Settings. Stopping level validation at Level {actualTotalLevels}");
+                break;
+            }
+        }
+        
+        if (actualTotalLevels < totalLevels)
+        {
+            Debug.LogWarning($"Only {actualTotalLevels} level scenes found in Build Settings. Adjusting totalLevels from {totalLevels} to {actualTotalLevels}");
+            totalLevels = actualTotalLevels;
+        }
+        
+        Debug.Log($"Level validation complete. Total playable levels: {totalLevels}");
+    }
+
+    /// <summary>
     /// Check if a specific level is unlocked
     /// </summary>
     /// <param name="levelNumber">Level number (1-based)</param>
@@ -58,6 +96,7 @@ public class LevelManager : MonoBehaviour
     public bool IsLevelUnlocked(int levelNumber)
     {
         if (levelNumber == 1) return true; // Level 1 is always unlocked
+        if (levelNumber > totalLevels) return false; // Can't unlock levels that don't exist
         
         string key = LEVEL_PROGRESS_KEY + levelNumber;
         return PlayerPrefs.GetInt(key, 0) == 1;
@@ -70,6 +109,8 @@ public class LevelManager : MonoBehaviour
     /// <returns>True if level is completed</returns>
     public bool IsLevelCompleted(int levelNumber)
     {
+        if (levelNumber > totalLevels) return false;
+        
         string key = "LevelCompleted" + levelNumber;
         return PlayerPrefs.GetInt(key, 0) == 1;
     }
@@ -80,7 +121,11 @@ public class LevelManager : MonoBehaviour
     /// <param name="levelNumber">Level number to unlock (1-based)</param>
     public void UnlockLevel(int levelNumber)
     {
-        if (levelNumber <= 0 || levelNumber > totalLevels) return;
+        if (levelNumber <= 0 || levelNumber > totalLevels) 
+        {
+            Debug.LogWarning($"Cannot unlock level {levelNumber}. Valid range is 1-{totalLevels}");
+            return;
+        }
 
         string key = LEVEL_PROGRESS_KEY + levelNumber;
         PlayerPrefs.SetInt(key, 1);
@@ -102,64 +147,122 @@ public class LevelManager : MonoBehaviour
     /// <param name="levelNumber">Level number that was completed (1-based)</param>
     public void CompleteLevel(int levelNumber)
     {
-        if (levelNumber <= 0 || levelNumber > totalLevels) return;
+        if (levelNumber <= 0 || levelNumber > totalLevels) 
+        {
+            Debug.LogWarning($"Cannot complete level {levelNumber}. Valid range is 1-{totalLevels}");
+            return;
+        }
 
         // Mark level as completed
         string completedKey = "LevelCompleted" + levelNumber;
         PlayerPrefs.SetInt(completedKey, 1);
         
-        // Unlock next level
+        // Unlock next level if it exists
         int nextLevel = levelNumber + 1;
         if (nextLevel <= totalLevels)
         {
             UnlockLevel(nextLevel);
+            Debug.Log($"Level {levelNumber} completed! Next level {nextLevel} unlocked.");
+        }
+        else
+        {
+            Debug.Log($"Level {levelNumber} completed! This was the final level - Congratulations!");
         }
         
         PlayerPrefs.Save();
-        Debug.Log($"Level {levelNumber} completed! Next level {nextLevel} unlocked.");
     }
 
     /// <summary>
-    /// Get the highest unlocked level
+    /// Get the highest unlocked level (clamped to actual available levels)
     /// </summary>
     /// <returns>Highest unlocked level number</returns>
     public int GetHighestUnlockedLevel()
     {
-        return PlayerPrefs.GetInt(HIGHEST_UNLOCKED_KEY, 1);
+        int highest = PlayerPrefs.GetInt(HIGHEST_UNLOCKED_KEY, 1);
+        return Mathf.Min(highest, totalLevels); // Don't return higher than available levels
     }
 
     /// <summary>
-    /// Load a level by number (only if unlocked)
+    /// Load a level by number with validation
     /// </summary>
     /// <param name="levelNumber">Level number to load (1-based)</param>
     public void LoadLevel(int levelNumber)
     {
+        // Validate level exists
+        if (levelNumber <= 0 || levelNumber > totalLevels)
+        {
+            Debug.LogError($"Cannot load level {levelNumber}. Valid range is 1-{totalLevels}");
+            LoadMenuScene();
+            return;
+        }
+
+        // Check if level is unlocked
         if (!IsLevelUnlocked(levelNumber))
         {
-            Debug.LogWarning($"Cannot load level {levelNumber} - it's still locked!");
+            Debug.LogWarning($"Cannot load level {levelNumber} - it's still locked! Loading highest unlocked level instead.");
+            LoadLevel(GetHighestUnlockedLevel());
             return;
         }
 
         string sceneName = "Level" + levelNumber;
+        
+        // Double-check scene exists before loading
+        if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            Debug.LogError($"Scene '{sceneName}' not found! Loading menu instead.");
+            LoadMenuScene();
+            return;
+        }
+
+        Debug.Log($"Loading level {levelNumber} ({sceneName})");
         SceneManager.LoadScene(sceneName);
     }
 
     /// <summary>
-    /// Load a level by scene name (only if unlocked)
+    /// Load the menu scene as fallback
+    /// </summary>
+    private void LoadMenuScene()
+    {
+        if (!string.IsNullOrEmpty(menuSceneName) && Application.CanStreamedLevelBeLoaded(menuSceneName))
+        {
+            Debug.Log($"Loading menu scene: {menuSceneName}");
+            SceneManager.LoadScene(menuSceneName);
+        }
+        else
+        {
+            Debug.LogError("Menu scene not found! Loading scene index 0");
+            SceneManager.LoadScene(0);
+        }
+    }
+
+    /// <summary>
+    /// Load a level by scene name (with validation)
     /// </summary>
     /// <param name="sceneName">Scene name to load</param>
     public void LoadLevelByName(string sceneName)
     {
-        // Extract level number from scene name
-        int levelNumber = ExtractLevelNumberFromName(sceneName);
-        
-        if (levelNumber > 0 && !IsLevelUnlocked(levelNumber))
+        // Check if scene exists
+        if (!Application.CanStreamedLevelBeLoaded(sceneName))
         {
-            Debug.LogWarning($"Cannot load {sceneName} - it's still locked!");
+            Debug.LogError($"Scene '{sceneName}' not found in Build Settings!");
+            LoadMenuScene();
             return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        // Extract level number from scene name
+        int levelNumber = ExtractLevelNumberFromName(sceneName);
+        
+        if (levelNumber > 0)
+        {
+            // Use the regular LoadLevel method for validation
+            LoadLevel(levelNumber);
+        }
+        else
+        {
+            // Not a level scene, load directly (like menu scenes)
+            Debug.Log($"Loading scene: {sceneName}");
+            SceneManager.LoadScene(sceneName);
+        }
     }
 
     /// <summary>
@@ -222,6 +325,25 @@ public class LevelManager : MonoBehaviour
             }
         }
         
-        return (float)completedLevels / totalLevels * 100f;
+        return totalLevels > 0 ? (float)completedLevels / totalLevels * 100f : 0f;
+    }
+
+    /// <summary>
+    /// Debug method to show current status
+    /// </summary>
+    [ContextMenu("Show Level Status")]
+    private void ShowLevelStatus()
+    {
+        Debug.Log($"=== LEVEL MANAGER STATUS ===");
+        Debug.Log($"Total Levels: {totalLevels}");
+        Debug.Log($"Highest Unlocked: {GetHighestUnlockedLevel()}");
+        Debug.Log($"Completion: {GetCompletionPercentage():F1}%");
+        
+        for (int i = 1; i <= totalLevels; i++)
+        {
+            string status = IsLevelCompleted(i) ? "Completed" : (IsLevelUnlocked(i) ? "Unlocked" : "Locked");
+            Debug.Log($"Level {i}: {status}");
+        }
+        Debug.Log($"===========================");
     }
 }

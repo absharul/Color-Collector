@@ -963,9 +963,11 @@ MonoBehaviour:
   startButton: {fileID: 754625097}
   quitButton: {fileID: 1355867393}
   selectLevelButton: {fileID: 1121062135}
-  firstGameplayScene: Level_1
+  startButtonText: {fileID: 0}
+  progressText: {fileID: 0}
   levelMenuScene: LevelMenu
   fallbackBuildIndex: 1
+  buttonClickSound: {fileID: 0}
 --- !u!4 &1581109432
 Transform:
   m_ObjectHideFlags: 0
