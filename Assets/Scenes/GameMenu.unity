@@ -365,6 +365,60 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7536115872683437957, guid: 46af6c67efd477140b24f3666e5849dd, type: 3}
   m_PrefabInstance: {fileID: 642222783}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &749348295
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 749348297}
+  - component: {fileID: 749348296}
+  m_Layer: 0
+  m_Name: BannerAdManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &749348296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749348295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95b5daf6c123aae49969af3af41f7f7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  androidBannerAdUnitId: ca-app-pub-3940256099942544/6300978111
+  iOSBannerAdUnitId: 
+  useTestAds: 1
+  bannerPosition: 1
+  showOnStart: 1
+  autoRetryOnFailure: 1
+  retryDelaySeconds: 30
+  mainUIContainer: {fileID: 0}
+  bannerPlaceholder: {fileID: 0}
+  bannerHeightPixels: 50
+--- !u!4 &749348297
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749348295}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 307.926, y: 252.86961, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &754625095
 GameObject:
   m_ObjectHideFlags: 0
@@ -965,6 +1019,9 @@ MonoBehaviour:
   selectLevelButton: {fileID: 1121062135}
   startButtonText: {fileID: 0}
   progressText: {fileID: 0}
+  bannerAdManager: {fileID: 749348296}
+  showBannerOnMenuLoad: 1
+  hideBannerOnMenuExit: 1
   levelMenuScene: LevelMenu
   fallbackBuildIndex: 1
   buttonClickSound: {fileID: 0}
@@ -991,3 +1048,4 @@ SceneRoots:
   - {fileID: 370411989}
   - {fileID: 642222783}
   - {fileID: 1581109432}
+  - {fileID: 749348297}

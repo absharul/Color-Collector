@@ -15,6 +15,11 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI startButtonText; // Optional: To show "Continue Level X"
     [SerializeField] private TextMeshProUGUI progressText; // Optional: To show overall progress
 
+    [Header("Banner Ad Integration")]
+    [SerializeField] private BannerAd bannerAdManager; // Reference to BannerAdManager GameObject
+    [SerializeField] private bool showBannerOnMenuLoad = true; // Auto-show banner when menu loads
+    [SerializeField] private bool hideBannerOnMenuExit = true; // Auto-hide banner when leaving menu
+
     [Header("Scene Loading")]
     [SerializeField] private string levelMenuScene = "LevelMenu";
     [SerializeField] private int fallbackBuildIndex = 1;
@@ -30,13 +35,126 @@ public class MenuManager : MonoBehaviour
         WireButtons();
         ValidateScene();
         UpdateUI();
+        
+        // Find BannerAd if not assigned
+        if (bannerAdManager == null)
+        {
+            bannerAdManager = FindFirstObjectByType<BannerAd>();
+        }
     }
 
     private void Start()
     {
         // Update UI after LevelManager is fully initialized
         UpdateUI();
+        
+        // Show banner ad if enabled and available
+        if (showBannerOnMenuLoad && bannerAdManager != null)
+        {
+            ShowBannerAd();
+        }
+        
+        // Subscribe to banner ad events
+        SubscribeToBannerEvents();
     }
+
+    private void SubscribeToBannerEvents()
+    {
+        // Subscribe to banner ad events for additional handling if needed
+        BannerAd.OnBannerLoaded += OnBannerAdLoaded;
+        BannerAd.OnBannerLoadFailed += OnBannerAdLoadFailed;
+        BannerAd.OnBannerClicked += OnBannerAdClicked;
+    }
+
+    private void UnsubscribeFromBannerEvents()
+    {
+        // Unsubscribe from events to prevent memory leaks
+        BannerAd.OnBannerLoaded -= OnBannerAdLoaded;
+        BannerAd.OnBannerLoadFailed -= OnBannerAdLoadFailed;
+        BannerAd.OnBannerClicked -= OnBannerAdClicked;
+    }
+
+    #region Banner Ad Event Handlers
+
+    private void OnBannerAdLoaded()
+    {
+        Debug.Log("[MenuManager] Banner ad loaded in menu");
+        // You can add additional logic here when banner loads
+        // For example: adjust UI, show success message, etc.
+    }
+
+    private void OnBannerAdLoadFailed(string errorMessage)
+    {
+        Debug.LogWarning($"[MenuManager] Banner ad failed to load in menu: {errorMessage}");
+        // You can add fallback logic here
+        // For example: show alternative content, retry later, etc.
+    }
+
+    private void OnBannerAdClicked()
+    {
+        Debug.Log("[MenuManager] Banner ad clicked in menu");
+        // You can add analytics tracking or other logic here
+    }
+
+    #endregion
+
+    #region Banner Ad Control Methods
+
+    /// <summary>
+    /// Show the banner ad
+    /// </summary>
+    public void ShowBannerAd()
+    {
+        if (bannerAdManager != null)
+        {
+            bannerAdManager.ShowBannerAd();
+            Debug.Log("[MenuManager] Requesting to show banner ad");
+        }
+        else
+        {
+            Debug.LogWarning("[MenuManager] BannerAd manager not found! Make sure BannerAdManager GameObject exists in scene.");
+        }
+    }
+
+    /// <summary>
+    /// Hide the banner ad
+    /// </summary>
+    public void HideBannerAd()
+    {
+        if (bannerAdManager != null)
+        {
+            bannerAdManager.HideBannerAd();
+            Debug.Log("[MenuManager] Requesting to hide banner ad");
+        }
+    }
+
+    /// <summary>
+    /// Toggle banner ad visibility
+    /// </summary>
+    public void ToggleBannerAd()
+    {
+        if (bannerAdManager != null)
+        {
+            if (bannerAdManager.IsBannerShowing())
+            {
+                HideBannerAd();
+            }
+            else
+            {
+                ShowBannerAd();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Check if banner ad is currently showing
+    /// </summary>
+    public bool IsBannerAdShowing()
+    {
+        return bannerAdManager != null && bannerAdManager.IsBannerShowing();
+    }
+
+    #endregion
 
     private void SetupAudio()
     {
@@ -147,6 +265,12 @@ public class MenuManager : MonoBehaviour
     {
         PlayButtonSound();
 
+        // Hide banner ad before leaving menu (if enabled)
+        if (hideBannerOnMenuExit)
+        {
+            HideBannerAd();
+        }
+
         if (LevelManager.Instance == null)
         {
             Debug.LogError("[Menu] LevelManager not found! Loading fallback level.");
@@ -202,6 +326,12 @@ public class MenuManager : MonoBehaviour
     {
         PlayButtonSound();
 
+        // Hide banner ad before leaving menu (if enabled)
+        if (hideBannerOnMenuExit)
+        {
+            HideBannerAd();
+        }
+
         if (!string.IsNullOrEmpty(levelMenuScene) && Application.CanStreamedLevelBeLoaded(levelMenuScene))
         {
             Debug.Log($"[Menu] Opening Level Menu scene: {levelMenuScene}");
@@ -233,6 +363,33 @@ public class MenuManager : MonoBehaviour
     {
         // Small delay to ensure LevelManager is ready
         Invoke(nameof(UpdateUI), 0.1f);
+        
+        // Show banner ad when menu becomes active (if enabled)
+        if (showBannerOnMenuLoad && bannerAdManager != null)
+        {
+            ShowBannerAd();
+        }
+        
+        // Resubscribe to events
+        SubscribeToBannerEvents();
+    }
+
+    private void OnDisable()
+    {
+        // Hide banner ad when leaving menu (if enabled)
+        if (hideBannerOnMenuExit)
+        {
+            HideBannerAd();
+        }
+        
+        // Unsubscribe from events
+        UnsubscribeFromBannerEvents();
+    }
+
+    private void OnDestroy()
+    {
+        // Ensure we clean up event subscriptions
+        UnsubscribeFromBannerEvents();
     }
 
     // Public method to refresh UI (can be called from other scripts)
@@ -241,7 +398,8 @@ public class MenuManager : MonoBehaviour
         UpdateUI();
     }
 
-    // Development helper methods
+    #region Development Helper Methods
+
     [ContextMenu("Show Current Progress")]
     private void ShowCurrentProgress()
     {
@@ -268,4 +426,24 @@ public class MenuManager : MonoBehaviour
             Debug.Log($"[TEST] Start Game would load Level {levelToLoad}");
         }
     }
+
+    [ContextMenu("Show Banner Ad")]
+    private void TestShowBannerAd()
+    {
+        ShowBannerAd();
+    }
+
+    [ContextMenu("Hide Banner Ad")]
+    private void TestHideBannerAd()
+    {
+        HideBannerAd();
+    }
+
+    [ContextMenu("Toggle Banner Ad")]
+    private void TestToggleBannerAd()
+    {
+        ToggleBannerAd();
+    }
+
+    #endregion
 }

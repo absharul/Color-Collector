@@ -247,7 +247,7 @@ MonoBehaviour:
   cubeCollectedAudio: {fileID: 8300000, guid: ae243d3ef4bdac14d9fdb988c8030c9d, type: 3}
   levelCompleteAudio: {fileID: 8300000, guid: fbb7f1c3d9cc25f459315de985d408ed, type: 3}
   gameOverAudio: {fileID: 8300000, guid: 6d0c4a8780d8e6647ba0aee70637e963, type: 3}
-  admobInterstitial: {fileID: 0}
+  admobInterstitial: {fileID: 830974281}
   currentLevelNumber: 1
 --- !u!114 &112083379
 MonoBehaviour:
